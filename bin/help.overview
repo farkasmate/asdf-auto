@@ -1,0 +1,6 @@
+#!/usr/bin/env bash
+
+set -euo pipefail
+
+printf "asdf auto          Autoinstall plugins and tools\n"
+printf "asdf auto dry_run  Troubleshoot resolved plugin configuration\n"

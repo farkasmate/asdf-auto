@@ -15,18 +15,13 @@
 
 # Dependencies
 
-**TODO: adapt this section**
-
-- `bash`, `curl`, `tar`, and [POSIX utilities](https://pubs.opengroup.org/onlinepubs/9699919799/idx/utilities.html).
-- `SOME_ENV_VAR`: set this environment variable in your shell config to load the correct version of tool x.
+- `asdf`, `bash` and [POSIX utilities](https://pubs.opengroup.org/onlinepubs/9699919799/idx/utilities.html).
 
 # Install
 
 Plugin:
 
 ```shell
-asdf plugin add auto
-# or
 asdf plugin add auto https://github.com/farkasmate/asdf-auto.git
 ```
 

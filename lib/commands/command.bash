@@ -1,6 +1,5 @@
 # -*- sh -*-
-# FIXME
-## shellcheck source=lib/functions/installs.bash
+# shellcheck source=lib/utils.bash
 . "$(dirname "$(dirname -- "${BASH_SOURCE[0]}")")/utils.bash"
 
-auto_command
+auto_command "$@"

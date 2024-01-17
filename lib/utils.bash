@@ -1,9 +1,5 @@
 #!/usr/bin/env bash
 
-. $ASDF_DIR/lib/utils.bash
-. $ASDF_DIR/lib/commands/reshim.bash
-. $ASDF_DIR/lib/functions/installs.bash
-
 set -euo pipefail
 
 GH_REPO="https://github.com/farkasmate/asdf-auto"
@@ -74,9 +70,9 @@ install_version() {
 
 # auto functions
 auto_command() {
-  local dry_run
+  local dry_run=
 
-  if [ "$1" = "--dry-run" ]; then
+  if [ $# -gt 0 ] && [ "$1" = "--dry-run" ]; then
     dry_run=1
   fi
 
@@ -96,10 +92,10 @@ auto_command() {
     fi
 
     # add plugin: asdf plugin add <name> [<git-url>]
-    bash -c ". $ASDF_DIR/lib/utils.bash; . $ASDF_DIR/lib/functions/plugins.bash; plugin_add_command $plugin $git_url"
+    bash -c "asdf plugin add $plugin $git_url"
 
-    # update plugin: asdf plugin-update {<name> [git-ref] | --all}
-    bash -c  ". $ASDF_DIR/lib/utils.bash; . $ASDF_DIR/lib/functions/plugins.bash; plugin_update_command $plugin $git_ref"
+    # update plugin: asdf plugin update {<name> [git-ref] | --all}
+    bash -c  "asdf plugin update $plugin $git_ref"
   done
 
   if [ ! -z "$dry_run" ]; then
@@ -107,7 +103,7 @@ auto_command() {
   fi
 
   # install tools
-  install_local_tool_versions
+  bash -c "asdf install"
 }
 
 get_plugin_version() {

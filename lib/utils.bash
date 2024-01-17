@@ -1,5 +1,9 @@
 #!/usr/bin/env bash
 
+. $ASDF_DIR/lib/utils.bash
+. $ASDF_DIR/lib/commands/reshim.bash
+. $ASDF_DIR/lib/functions/installs.bash
+
 set -euo pipefail
 
 GH_REPO="https://github.com/farkasmate/asdf-auto"
@@ -66,4 +70,103 @@ install_version() {
 		rm -rf "$install_path"
 		fail "An error occurred while installing $TOOL_NAME $version."
 	)
+}
+
+# auto functions
+auto_command() {
+  local dry_run
+
+  if [ "$1" = "--dry-run" ]; then
+    dry_run=1
+  fi
+
+  local tool_versions_path=$(find_tool_versions)
+  local plugins=$(strip_tool_version_comments "$tool_versions_path" | cut -d ' ' -f 1)
+
+  for plugin in $plugins
+  do
+    local plugin_version=$(get_plugin_version "$plugin")
+    local git_url=$(cut -d '|' -f 1 <<<"$plugin_version")
+    local git_ref=$(cut -d '|' -f 2 <<<"$plugin_version")
+    local config_file=$(cut -d '|' -f 3 <<<"$plugin_version")
+
+    if [ ! -z "$dry_run" ]; then
+      print_dry_run "$plugin" "$git_ref" "$git_url" "$config_file"
+      continue
+    fi
+
+    # add plugin: asdf plugin add <name> [<git-url>]
+    bash -c ". $ASDF_DIR/lib/utils.bash; . $ASDF_DIR/lib/functions/plugins.bash; plugin_add_command $plugin $git_url"
+
+    # update plugin: asdf plugin-update {<name> [git-ref] | --all}
+    bash -c  ". $ASDF_DIR/lib/utils.bash; . $ASDF_DIR/lib/functions/plugins.bash; plugin_update_command $plugin $git_ref"
+  done
+
+  if [ ! -z "$dry_run" ]; then
+    return 1
+  fi
+
+  # install tools
+  install_local_tool_versions
+}
+
+get_plugin_version() {
+  local plugin_name=$1
+  local search_path=$PWD
+
+  while true; do
+    if [ "$search_path" = "/" ]; then
+      printf "||default\n"
+      break
+    fi
+
+    local tool_versions_path
+    tool_versions_path=$(get_version_in_dir "$plugin_name" "$search_path" | cut -d'|' -f2)
+
+    if parse_plugin_version_comment "$plugin_name" "$tool_versions_path"; then
+      break
+    fi
+
+    search_path=$(dirname "$search_path")
+  done
+}
+
+parse_plugin_version_comment() {
+  local plugin_name=$1
+  local file_path=$2
+
+  if [ -f "$file_path" ]; then
+    local git_url
+    local git_ref
+
+    local config_line=$(grep "$plugin_name " "$tool_versions_path")
+    if $(echo $config_line | grep -q ' # http')
+    then
+      local comment=$(echo "$config_line" | sed "s/^$plugin_name [^#]*# //")
+      git_url=$(echo "$comment" | grep -o "^http[^ ]*")
+      git_ref=$(echo "${comment#"$git_url"}" | sed 's/^[[:space:]]*//')
+      printf "%s|%s|%s\n" "$git_url" "$git_ref" "$file_path"
+
+      return 0
+    fi
+  fi
+
+  return 1
+}
+
+print_dry_run() {
+  local plugin_name=$1
+  local git_url=$2
+  local git_ref=$3
+  local config_file=$4
+
+  if [ -z "$git_url" ]; then
+    git_url=$(asdf_plugin_repository_url)
+  fi
+
+  if [ -z "$git_ref" ]; then
+    git_ref="latest"
+  fi
+
+  printf "Would install %s %s plugin from %s as configured by %s\n" "$git_ref" "$plugin_name" "$git_url" "$config_file"
 }

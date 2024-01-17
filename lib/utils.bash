@@ -121,7 +121,7 @@ get_plugin_version() {
     fi
 
     local tool_versions_path
-    tool_versions_path=$(get_version_in_dir "$plugin_name" "$search_path" | cut -d'|' -f2)
+    tool_versions_path=$(get_version_in_dir "$plugin_name" "$search_path" "" | cut -d'|' -f2)
 
     if parse_plugin_version_comment "$plugin_name" "$tool_versions_path"; then
       break
